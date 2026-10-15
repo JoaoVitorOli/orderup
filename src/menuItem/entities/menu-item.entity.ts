@@ -9,7 +9,10 @@ export const MenuItemSchema = defineEntity({
     quantity: p.integer(),
     price: p.integer(),
     createdAt: p.datetime().onCreate(() => new Date()),
-    updatedAt: p.datetime().onCreate(() => new Date())
+    updatedAt: p
+      .datetime()
+      .onCreate(() => new Date())
+      .onUpdate(() => new Date()),
   },
 });
 
