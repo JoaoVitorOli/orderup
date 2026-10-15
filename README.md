@@ -8,7 +8,6 @@ An ordering system for a small diner. Customers build their order on their phone
 - **MikroORM + PostgreSQL** to store the menu and orders
 - **WebSockets** for real-time updates
 - **Docker** to run everything together
-- **Optional:** SQS/SNS to send a notification when an order is ready, and S3 for menu photos
 - **React** for a simple customer screen and a kitchen screen
 
 ## Application flow
