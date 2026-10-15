@@ -13,4 +13,8 @@ export default defineConfig({
     path: './dist/migrations',
     pathTs: './src/migrations',
   },
+  seeder: {
+    path: './dist/seeders',
+    pathTs: './src/seeders',
+  },
 });
