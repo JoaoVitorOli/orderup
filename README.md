@@ -11,6 +11,10 @@ An ordering system for a small diner. Customers build their order on their phone
 - **Optional:** SQS/SNS to send a notification when an order is ready, and S3 for menu photos
 - **React** for a simple customer screen and a kitchen screen
 
+## Application flow
+
+![Application flow](app-flow.svg)
+
 ## User flow
 
 1. The customer opens the menu and sees the available items, price and whether they're still in stock.
