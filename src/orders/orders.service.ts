@@ -1,10 +1,20 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import type { CreateOrderDto } from './dto/create-order.dto.js';
-import { EntityManager } from '@mikro-orm/postgresql';
-import { OrderSchema } from './entities/order.entity.js';
+import { EntityManager, FilterQuery } from '@mikro-orm/postgresql';
+import { IOrder, OrderSchema } from './entities/order.entity.js';
 import { MenuItemSchema } from '../menuItem/entities/menu-item.entity.js';
 import { OrderItemSchema } from './entities/order-item.entity.js';
 import type { GetOrderStatusDto } from './dto/get-order-status.dts.js';
+import {type  GetAllOrderDto } from './dto/get-all-orders.dto.js';
+import type { UpdateOrderStatusDto } from './dto/update-order-status.dto.js';
+
+type OrderStatus = UpdateOrderStatusDto['status'];
+
+const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
+  RECEIVED: ['PREPARING'],
+  PREPARING: ['READY'],
+  READY: [],
+};
 
 @Injectable()
 export class OrdersService {
@@ -71,6 +81,35 @@ export class OrdersService {
       throw new NotFoundException('Order not found')
     }
 
+    return order;
+  }
+
+  async getAllOrders(query?: GetAllOrderDto) {
+    const where: FilterQuery<IOrder> = {};
+
+    if (query?.status?.length) {
+      where.status = { $in: query.status };
+    }
+
+    return this.orm.find(OrderSchema, where, {
+      orderBy: { createdAt: 'asc' },
+      populate: ['items.menuItem'],
+    });
+  }
+
+  async updateStatus(id: GetOrderStatusDto, { status }: UpdateOrderStatusDto) {
+    const order = await this.getById(id);
+
+    const currentStatus = order.status as OrderStatus;
+
+    if (currentStatus === status) return order;
+
+    if (!allowedTransitions[currentStatus].includes(status)) {
+      throw new ConflictException(`Cannot change order status from ${currentStatus} to ${status}`);
+    }
+
+    order.status = status;
+    await this.orm.flush();
     return order;
   }
 }
