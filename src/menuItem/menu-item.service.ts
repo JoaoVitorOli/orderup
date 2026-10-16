@@ -1,14 +1,15 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import * as createMenuItemDto from './dtos/create-menu-item.dto.js';
+import type { CreateMenuItemDto } from './dtos/create-menu-item.dto.js';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { MenuItemSchema } from './entities/menu-item.entity.js';
-import * as deleteMenuItemDto from './dtos/delete-menu-item.dto.js';
+import type { DeleteMenuItemDto } from './dtos/delete-menu-item.dto.js';
+import type { GetMenuItemDto } from './dtos/get-menu-item.dto.js';
 
 @Injectable()
 export class MenuItemService {
   constructor(private readonly orm: EntityManager) {}
 
-  async create(createMenuItemDto: createMenuItemDto.CreateMenuItemDto) {
+  async create(createMenuItemDto: CreateMenuItemDto) {
     const itemAlreadyExists = await this.orm.findOne(MenuItemSchema, {
       name: createMenuItemDto.name
     })
@@ -22,7 +23,7 @@ export class MenuItemService {
     return item;
   }
 
-  async delete(id: deleteMenuItemDto.DeleteMenuItemDto) {
+  async delete(id: DeleteMenuItemDto) {
     const menuItem = await this.orm.findOne(MenuItemSchema, {
       id
     });
@@ -32,6 +33,20 @@ export class MenuItemService {
     }
 
     const item = this.orm.nativeDelete(MenuItemSchema, id);
+    return item;
+  }
+
+  async getAll() {
+    return this.orm.findAll(MenuItemSchema);
+  }
+
+  async getById(id: GetMenuItemDto) {
+    const item = await this.orm.findOne(MenuItemSchema, id);
+
+    if (!item) {
+      throw new NotFoundException('This menu item does not exists');
+    }
+
     return item;
   }
 }
