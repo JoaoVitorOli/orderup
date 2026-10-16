@@ -1,9 +1,10 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateOrderDto } from './dto/create-order.dto.js';
+import type { CreateOrderDto } from './dto/create-order.dto.js';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { OrderSchema } from './entities/order.entity.js';
 import { MenuItemSchema } from '../menuItem/entities/menu-item.entity.js';
 import { OrderItemSchema } from './entities/order-item.entity.js';
+import type { GetOrderStatusDto } from './dto/get-order-status.dts.js';
 
 @Injectable()
 export class OrdersService {
@@ -60,6 +61,16 @@ export class OrdersService {
     }
 
     await this.orm.flush();
+    return order;
+  }
+
+  async getById(id: GetOrderStatusDto) {
+    const order = await this.orm.findOne(OrderSchema, { id });
+    
+    if (!order) {
+      throw new NotFoundException('Order not found')
+    }
+
     return order;
   }
 }
