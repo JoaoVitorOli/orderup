@@ -70,25 +70,24 @@
 
   <rect x="315" y="122" width="430" height="42" rx="8" class="inner"/>
   <text x="330" y="139" class="h2">ZodValidationPipe</text>
-  <text x="330" y="156" class="body">Validates body and params with Zod schemas · invalid → 400</text>
+  <text x="330" y="156" class="body">Validates body, params and query with Zod schemas · invalid → 400</text>
 
   <rect x="315" y="170" width="430" height="42" rx="8" class="inner"/>
   <text x="330" y="187" class="h2">MenuItemController</text>
-  <text x="330" y="204" class="body">POST /menu · GET /menu (planned)</text>
+  <text x="330" y="204" class="body">/menu: GET · POST · GET /:id · PATCH /:id · DELETE /:id</text>
 
   <rect x="315" y="218" width="430" height="42" rx="8" class="inner"/>
   <text x="330" y="235" class="h2">MenuItemService</text>
-  <text x="330" y="252" class="body">Duplicate name → 409 · em.create + em.flush</text>
+  <text x="330" y="252" class="body">Duplicate name → 409 · missing item → 404 · em.flush</text>
 
   <rect x="315" y="266" width="430" height="42" rx="8" class="inner planned"/>
   <text x="330" y="283" class="h2">KitchenKeyGuard</text>
   <text x="735" y="283" text-anchor="end" class="tag">PLANNED</text>
   <text x="330" y="300" class="body">Kitchen-only routes: checks the KITCHEN_API_KEY header</text>
 
-  <rect x="315" y="314" width="430" height="42" rx="8" class="inner planned"/>
+  <rect x="315" y="314" width="430" height="42" rx="8" class="inner"/>
   <text x="330" y="331" class="h2">OrdersController · OrdersService</text>
-  <text x="735" y="331" text-anchor="end" class="tag">PLANNED</text>
-  <text x="330" y="348" class="body">POST /orders · GET /orders/:id · GET /orders · PATCH …/status</text>
+  <text x="330" y="348" class="body">POST /orders · GET /orders?status= · GET /orders/:id · PATCH …/status</text>
 
   <rect x="315" y="362" width="430" height="42" rx="8" class="inner planned"/>
   <text x="330" y="379" class="h2">OrdersGateway</text>
@@ -117,25 +116,25 @@
   <!-- ============ Flow 1: place an order ============ -->
   <rect x="20" y="440" width="1160" height="195" rx="12" class="panel"/>
   <text x="40" y="470" class="h1">1 · Place an order — POST /orders</text>
-  <text x="1160" y="470" text-anchor="end" class="tag">PLANNED</text>
 
   <!-- step 1 -->
-  <rect x="40" y="490" width="196" height="125" rx="10" class="nest planned" stroke-width="1.2"/>
+  <rect x="40" y="490" width="196" height="125" rx="10" class="nest" stroke-width="1.2"/>
   <circle cx="62" cy="512" r="12" fill="#e0234e"/>
   <text x="62" y="516" text-anchor="middle" class="badge-text">1</text>
   <text x="82" y="517" class="h2">Validate body</text>
   <text x="54" y="548" class="body">ZodValidationPipe:</text>
-  <text x="54" y="566" class="body">customerName + items</text>
-  <text x="54" y="590" class="body">Invalid → 400</text>
+  <text x="54" y="566" class="body">customerName, items,</text>
+  <text x="54" y="584" class="body">idempotencyKey</text>
+  <text x="54" y="607" class="body">Invalid → 400</text>
 
   <line x1="236" y1="552" x2="269" y2="552" class="arrow" marker-end="url(#arrow)"/>
 
   <!-- step 2 -->
-  <rect x="271" y="490" width="196" height="125" rx="10" class="pg planned" stroke-width="1.2"/>
+  <rect x="271" y="490" width="196" height="125" rx="10" class="pg" stroke-width="1.2"/>
   <circle cx="293" cy="512" r="12" fill="#4338ca"/>
   <text x="293" y="516" text-anchor="middle" class="badge-text">2</text>
   <text x="313" y="517" class="h2">Idempotency check</text>
-  <text x="285" y="548" class="body">Same Idempotency-Key</text>
+  <text x="285" y="548" class="body">Same idempotencyKey</text>
   <text x="285" y="566" class="body">already used?</text>
   <text x="285" y="590" class="body">→ return that order,</text>
   <text x="285" y="607" class="body">no duplicate is created</text>
@@ -143,46 +142,45 @@
   <line x1="467" y1="552" x2="500" y2="552" class="arrow" marker-end="url(#arrow)"/>
 
   <!-- step 3 -->
-  <rect x="502" y="490" width="196" height="125" rx="10" class="pg planned" stroke-width="1.2"/>
+  <rect x="502" y="490" width="196" height="125" rx="10" class="pg" stroke-width="1.2"/>
   <circle cx="524" cy="512" r="12" fill="#4338ca"/>
   <text x="524" y="516" text-anchor="middle" class="badge-text">3</text>
-  <text x="544" y="517" class="h2">Lock menu items</text>
-  <text x="516" y="548" class="mono">SELECT … FOR UPDATE</text>
-  <text x="516" y="566" class="body">one buyer at a time</text>
-  <text x="516" y="590" class="body">Not enough quantity →</text>
-  <text x="516" y="607" class="body">409, rollback</text>
+  <text x="544" y="517" class="h2">Check stock</text>
+  <text x="516" y="548" class="body">Missing item → 404</text>
+  <text x="516" y="566" class="body">Not enough quantity → 409</text>
+  <text x="516" y="590" class="mono">SELECT … FOR UPDATE</text>
+  <text x="516" y="607" class="note">row lock · planned</text>
 
   <line x1="698" y1="552" x2="731" y2="552" class="arrow" marker-end="url(#arrow)"/>
 
   <!-- step 4 -->
-  <rect x="733" y="490" width="196" height="125" rx="10" class="pg planned" stroke-width="1.2"/>
+  <rect x="733" y="490" width="196" height="125" rx="10" class="pg" stroke-width="1.2"/>
   <circle cx="755" cy="512" r="12" fill="#4338ca"/>
   <text x="755" y="516" text-anchor="middle" class="badge-text">4</text>
   <text x="775" y="517" class="h2">Save the order</text>
   <text x="747" y="548" class="mono">quantity -= qty</text>
   <text x="747" y="566" class="body">order: RECEIVED + code</text>
   <text x="747" y="590" class="body">items keep unit_price</text>
-  <text x="747" y="607" class="body">all in one transaction</text>
+  <text x="747" y="607" class="body">all in one flush</text>
 
   <line x1="929" y1="552" x2="962" y2="552" class="arrow" marker-end="url(#arrow)"/>
 
   <!-- step 5 -->
-  <rect x="964" y="490" width="196" height="125" rx="10" class="client planned" stroke-width="1.2"/>
+  <rect x="964" y="490" width="196" height="125" rx="10" class="client" stroke-width="1.2"/>
   <circle cx="986" cy="512" r="12" fill="#3b82f6"/>
   <text x="986" y="516" text-anchor="middle" class="badge-text">5</text>
   <text x="1006" y="517" class="h2">Respond 201</text>
   <text x="978" y="548" class="mono">{ id, code,</text>
   <text x="992" y="566" class="mono">status, total }</text>
-  <text x="978" y="590" class="body">+ emit order.created</text>
-  <text x="978" y="607" class="body">to the kitchen room</text>
+  <text x="978" y="590" class="mono">order:created</text>
+  <text x="978" y="607" class="note">to kitchen · planned</text>
 
   <!-- ============ Flow 2: update status ============ -->
   <rect x="20" y="660" width="1160" height="330" rx="12" class="panel"/>
   <text x="40" y="690" class="h1">2 · Kitchen updates the status — PATCH /orders/:id/status</text>
-  <text x="1160" y="690" text-anchor="end" class="tag">PLANNED</text>
 
   <!-- A: request -->
-  <rect x="40" y="712" width="170" height="76" rx="10" class="kitchen planned" stroke-width="1.2"/>
+  <rect x="40" y="712" width="170" height="76" rx="10" class="kitchen" stroke-width="1.2"/>
   <text x="125" y="743" text-anchor="middle" class="h2">Request</text>
   <text x="125" y="765" text-anchor="middle" class="mono">{ status }</text>
 
@@ -204,14 +202,15 @@
   <text x="310" y="886" text-anchor="middle" class="body">missing or wrong key</text>
 
   <!-- C: load order -->
-  <rect x="420" y="712" width="180" height="76" rx="10" class="pg planned" stroke-width="1.2"/>
+  <rect x="420" y="712" width="180" height="76" rx="10" class="pg" stroke-width="1.2"/>
   <text x="510" y="743" text-anchor="middle" class="h2">Load order</text>
-  <text x="510" y="765" text-anchor="middle" class="mono">findOneOrFail(id)</text>
+  <text x="510" y="765" text-anchor="middle" class="mono">getById(id)</text>
+  <text x="510" y="781" text-anchor="middle" class="body">missing → 404</text>
 
   <line x1="600" y1="750" x2="638" y2="750" class="arrow" marker-end="url(#arrow)"/>
 
   <!-- D: valid transition? -->
-  <polygon points="710,708 780,750 710,792 640,750" class="nest planned" stroke-width="1.2"/>
+  <polygon points="710,708 780,750 710,792 640,750" class="nest" stroke-width="1.2"/>
   <text x="710" y="746" text-anchor="middle" class="h2">valid</text>
   <text x="710" y="762" text-anchor="middle" class="h2">transition?</text>
 
@@ -222,12 +221,13 @@
   <!-- D no -> 409 -->
   <line x1="710" y1="792" x2="710" y2="838" class="arrow" marker-end="url(#arrow)"/>
   <text x="720" y="818" class="no">no</text>
-  <rect x="620" y="840" width="180" height="62" rx="10" class="nest planned" stroke-width="1.2"/>
+  <rect x="620" y="840" width="180" height="62" rx="10" class="nest" stroke-width="1.2"/>
   <text x="710" y="866" text-anchor="middle" class="h2">409 Conflict</text>
-  <text x="710" y="886" text-anchor="middle" class="body">e.g. READY → RECEIVED</text>
+  <text x="710" y="886" text-anchor="middle" class="body">e.g. RECEIVED → READY</text>
+  <text x="710" y="920" text-anchor="middle" class="note">same status → 200, no change</text>
 
   <!-- E: save -->
-  <rect x="830" y="712" width="150" height="76" rx="10" class="pg planned" stroke-width="1.2"/>
+  <rect x="830" y="712" width="150" height="76" rx="10" class="pg" stroke-width="1.2"/>
   <text x="905" y="743" text-anchor="middle" class="h2">Save status</text>
   <text x="905" y="765" text-anchor="middle" class="mono">em.flush()</text>
 
