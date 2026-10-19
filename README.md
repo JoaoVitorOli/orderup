@@ -44,12 +44,14 @@ All prices are integers in cents (`2000` = R$ 20,00). IDs are UUIDs.
 
 ### Orders
 
-| Method  | Route                | Description                                                                                            |
-| ------- | -------------------- | ------------------------------------------------------------------------------------------------------ |
-| `POST`  | `/orders`            | Places an order. Body: `{ "customerName", "idempotencyKey", "items": [{ "menuItemId", "quantity" }] }` |
-| `GET`   | `/orders`            | Lists orders, oldest first, with their items. Optional filter: `?status=RECEIVED,PREPARING`            |
-| `GET`   | `/orders/:id`        | Returns one order · 404 when it doesn't exist                                                          |
-| `PATCH` | `/orders/:id/status` | Moves the order forward. Body: `{ "status" }` · 409 for an invalid transition                          |
+| Method  | Route                | Description                                                                                                  |
+| ------- | -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `POST`  | `/orders`            | Places an order. Body: `{ "customerName", "idempotencyKey", "items": [{ "menuItemId", "quantity" }] }`       |
+| `GET`   | `/orders`            | **Kitchen key.** Lists orders, oldest first, with their items. Optional filter: `?status=RECEIVED,PREPARING` |
+| `GET`   | `/orders/:id`        | Returns one order with its items · 404 when it doesn't exist                                                 |
+| `PATCH` | `/orders/:id/status` | **Kitchen key.** Moves the order forward. Body: `{ "status" }` · 409 for an invalid transition               |
+
+**Kitchen key:** send the `X-Kitchen-Key` header with the value of `KITCHEN_API_KEY`, or get 401.
 
 When placing an order:
 
@@ -60,25 +62,29 @@ The status only moves forward: `RECEIVED → PREPARING → READY`. Sending the c
 
 Invalid bodies, params or query strings return 400 with the list of fields that failed.
 
-### WebSocket events (planned)
+### WebSocket events
 
-| Event                  | Direction       | Room                     | When                                  |
-| ---------------------- | --------------- | ------------------------ | ------------------------------------- |
-| `kitchen:subscribe`    | client → server | joins `kitchen`          | the kitchen screen opens              |
-| `order:subscribe`      | client → server | joins `order:{id}`       | the customer opens their order        |
-| `order:created`        | server → client | `kitchen`                | after `POST /orders`                  |
-| `order:status_updated` | server → client | `kitchen` + `order:{id}` | after `PATCH /orders/:id/status`      |
-| `menu:stock_updated`   | server → client | everyone                 | after an order or a menu stock change |
+Socket.IO runs on the same port as the API. Writes still go through the REST routes; the socket only pushes the changes.
+
+| Event                  | Direction       | Room                     | When                                                                        |
+| ---------------------- | --------------- | ------------------------ | --------------------------------------------------------------------------- |
+| `kitchen:subscribe`    | client → server | joins `kitchen`          | the kitchen screen opens · kitchen key in the handshake (`auth.kitchenKey`) |
+| `order:subscribe`      | client → server | joins `order:{id}`       | the customer opens their order · body `{ "orderId" }`                       |
+| `order:created`        | server → client | `kitchen`                | after `POST /orders`                                                        |
+| `order:status_updated` | server → client | `kitchen` + `order:{id}` | after `PATCH /orders/:id/status`                                            |
+| `menu:stock_updated`   | server → client | everyone                 | planned                                                                     |
+
+Both subscribe events answer with an ack (`{ "ok": true }`). A wrong key or an invalid body comes back as an `exception` event instead.
 
 ## Frontend
 
 The [`web/`](web) folder holds a small React app (Vite + TypeScript) with three tabs:
 
 - **Cliente:** browse the menu, build a cart, place the order and follow its status.
-- **Cozinha:** orders split into Recebido / Preparando / Pronto columns, with a button to move each one forward.
+- **Cozinha:** orders split into Recebido / Preparando / Pronto columns, with a button to move each one forward. Asks for the kitchen key once and updates live over the socket.
 - **Cardápio (admin):** create, edit and delete menu items.
 
-In dev, the app calls `/api/...` on its own origin and Vite proxies it to the API (`http://localhost:3000`, or `API_URL` if set), so the API doesn't need CORS yet. Until the WebSocket gateway exists, the customer and kitchen screens poll the API every 3 seconds.
+In dev, the app calls `/api/...` and `/socket.io` on its own origin and Vite proxies both to the API (`http://localhost:3000`, or `API_URL` if set), so CORS doesn't get in the way. The customer screen still polls its order every 3 seconds until it moves to `order:subscribe`.
 
 > **Note:** the whole frontend ([`web/`](web)) was made with [Claude](https://claude.com/claude-code).
 
@@ -107,6 +113,9 @@ Environment variables (see [`.env.example`](.env.example)):
 
 - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`: used both by the Postgres container in [`compose.yaml`](compose.yaml) and by the API.
 - `POSTGRES_HOST`: where the API finds Postgres (`localhost` when the API runs outside Docker).
+- `URL_BASE`: the API's public URL.
+- `KITCHEN_API_KEY`: the kitchen's shared key, at least 32 characters. Generate one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+- `CORS_ORIGINS` (optional): comma-separated origins allowed to call the API.
 - `PORT` (optional): the API's port, `3000` by default.
 
 To try it out, list the menu and place an order with one of the item ids:
@@ -137,8 +146,11 @@ Other useful commands:
 - [x] List orders filtered by status
 - [x] Status transitions validated on the server
 - [ ] Lock menu rows while placing an order (`SELECT … FOR UPDATE`) so concurrent orders can't oversell
-- [ ] WebSocket gateway with `kitchen` and per-order rooms
-- [x] Customer, kitchen and menu admin screens (React, polling for now)
+- [x] WebSocket gateway with `kitchen` and per-order rooms
+- [x] Kitchen screen updated live over the socket
+- [ ] Customer screen updated live (`order:subscribe`, still polling)
+- [ ] Live stock on the menu (`menu:stock_updated`)
+- [x] Customer, kitchen and menu admin screens (React)
 - [ ] API running in Docker alongside Postgres
 
 ## Safety checklist
@@ -148,7 +160,7 @@ Other useful commands:
 - [x] Unique order code and idempotency key in the database
 - [x] Order status limited by a database check constraint
 - [x] Duplicate menu item names rejected (409)
-- [ ] Kitchen-only routes protected by a key (`KITCHEN_API_KEY`)
+- [x] Kitchen-only routes and the `kitchen` room protected by a key (`KITCHEN_API_KEY`)
 - [ ] Soft delete for menu items that already appear in orders
 - [x] CORS configuration
 - [x] Rate limiting
