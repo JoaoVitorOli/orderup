@@ -9,7 +9,7 @@ async function bootstrap() {
   app.enableCors({
     origin: env.get('CORS_ORIGINS'),
     methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
+    allowedHeaders: ['Content-Type', 'X-Kitchen-Key'],
     maxAge: 86400,
   });
 
