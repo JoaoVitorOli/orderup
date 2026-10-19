@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ZodValidationPipe } from '../shared/pipes/zod-validation.pipe.js';
 import { createOrderSchema, type CreateOrderDto } from './dto/create-order.dto.js';
 import { OrdersService } from './orders.service.js';
@@ -7,6 +7,7 @@ import { getAllOrderSchema } from './dto/get-all-orders.dto.js';
 import type { GetAllOrderDto } from './dto/get-all-orders.dto.js';
 import { updateOrderStatusSchema, type UpdateOrderStatusDto } from './dto/update-order-status.dto.js';
 import { minutes, SkipThrottle, Throttle } from '@nestjs/throttler';
+import { KitchenKeyGuard } from '../shared/guards/kitchen-key.guard.js';
 
 @Controller('orders')
 export class OrdersController {
@@ -18,6 +19,7 @@ export class OrdersController {
     return this.ordersService.create(createOrderDto);
   }
 
+  @UseGuards(KitchenKeyGuard)
   @SkipThrottle({ short: true })
   @Get()
   async getOrders(@Query(new ZodValidationPipe(getAllOrderSchema)) query?: GetAllOrderDto) {
@@ -29,6 +31,7 @@ export class OrdersController {
     return this.ordersService.getById(getOrderStatusDto);
   }
 
+  @UseGuards(KitchenKeyGuard)
   @Patch(':id/status')
   async updateStatus(
     @Param('id', new ZodValidationPipe(getOrderStatusSchema)) id: GetOrderStatusDto,
