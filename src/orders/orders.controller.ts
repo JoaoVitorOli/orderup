@@ -6,16 +6,19 @@ import { getOrderStatusSchema, type GetOrderStatusDto } from './dto/get-order-st
 import { getAllOrderSchema } from './dto/get-all-orders.dto.js';
 import type { GetAllOrderDto } from './dto/get-all-orders.dto.js';
 import { updateOrderStatusSchema, type UpdateOrderStatusDto } from './dto/update-order-status.dto.js';
+import { minutes, SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @Throttle({ long: { limit: 10, ttl: minutes(1) } })
   @Post()
   async create(@Body(new ZodValidationPipe(createOrderSchema)) createOrderDto: CreateOrderDto) {
     return this.ordersService.create(createOrderDto);
   }
 
+  @SkipThrottle({ short: true })
   @Get()
   async getOrders(@Query(new ZodValidationPipe(getAllOrderSchema)) query?: GetAllOrderDto) {
     return this.ordersService.getAllOrders(query);
