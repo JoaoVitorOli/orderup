@@ -44,12 +44,12 @@ All prices are integers in cents (`2000` = R$ 20,00). IDs are UUIDs.
 
 ### Orders
 
-| Method  | Route                | Description                                                                                             |
-| ------- | -------------------- | ------------------------------------------------------------------------------------------------------- |
+| Method  | Route                | Description                                                                                            |
+| ------- | -------------------- | ------------------------------------------------------------------------------------------------------ |
 | `POST`  | `/orders`            | Places an order. Body: `{ "customerName", "idempotencyKey", "items": [{ "menuItemId", "quantity" }] }` |
-| `GET`   | `/orders`            | Lists orders, oldest first, with their items. Optional filter: `?status=RECEIVED,PREPARING`             |
-| `GET`   | `/orders/:id`        | Returns one order · 404 when it doesn't exist                                                           |
-| `PATCH` | `/orders/:id/status` | Moves the order forward. Body: `{ "status" }` · 409 for an invalid transition                           |
+| `GET`   | `/orders`            | Lists orders, oldest first, with their items. Optional filter: `?status=RECEIVED,PREPARING`            |
+| `GET`   | `/orders/:id`        | Returns one order · 404 when it doesn't exist                                                          |
+| `PATCH` | `/orders/:id/status` | Moves the order forward. Body: `{ "status" }` · 409 for an invalid transition                          |
 
 When placing an order:
 
@@ -62,13 +62,13 @@ Invalid bodies, params or query strings return 400 with the list of fields that 
 
 ### WebSocket events (planned)
 
-| Event                  | Direction       | Room                      | When                                   |
-| ---------------------- | --------------- | ------------------------- | -------------------------------------- |
-| `kitchen:subscribe`    | client → server | joins `kitchen`           | the kitchen screen opens               |
-| `order:subscribe`      | client → server | joins `order:{id}`        | the customer opens their order         |
-| `order:created`        | server → client | `kitchen`                 | after `POST /orders`                   |
-| `order:status_updated` | server → client | `kitchen` + `order:{id}`  | after `PATCH /orders/:id/status`       |
-| `menu:stock_updated`   | server → client | everyone                  | after an order or a menu stock change  |
+| Event                  | Direction       | Room                     | When                                  |
+| ---------------------- | --------------- | ------------------------ | ------------------------------------- |
+| `kitchen:subscribe`    | client → server | joins `kitchen`          | the kitchen screen opens              |
+| `order:subscribe`      | client → server | joins `order:{id}`       | the customer opens their order        |
+| `order:created`        | server → client | `kitchen`                | after `POST /orders`                  |
+| `order:status_updated` | server → client | `kitchen` + `order:{id}` | after `PATCH /orders/:id/status`      |
+| `menu:stock_updated`   | server → client | everyone                 | after an order or a menu stock change |
 
 ## Frontend
 
@@ -121,12 +121,12 @@ curl -X POST http://localhost:3000/orders -H "Content-Type: application/json" -d
 
 Other useful commands:
 
-| Command                                  | What it does                                    |
-| ---------------------------------------- | ----------------------------------------------- |
-| `pnpm exec mikro-orm migration:create`   | Generates a migration from the entity changes   |
-| `pnpm exec mikro-orm migration:list`     | Shows which migrations already ran              |
-| `pnpm lint`                              | Runs oxlint                                     |
-| `pnpm test` / `pnpm test:e2e`            | Runs the unit / end-to-end tests (Vitest)       |
+| Command                                | What it does                                  |
+| -------------------------------------- | --------------------------------------------- |
+| `pnpm exec mikro-orm migration:create` | Generates a migration from the entity changes |
+| `pnpm exec mikro-orm migration:list`   | Shows which migrations already ran            |
+| `pnpm lint`                            | Runs oxlint                                   |
+| `pnpm test` / `pnpm test:e2e`          | Runs the unit / end-to-end tests (Vitest)     |
 
 ## Core features
 
@@ -150,5 +150,5 @@ Other useful commands:
 - [x] Duplicate menu item names rejected (409)
 - [ ] Kitchen-only routes protected by a key (`KITCHEN_API_KEY`)
 - [ ] Soft delete for menu items that already appear in orders
-- [ ] CORS configuration
+- [x] CORS configuration
 - [ ] Rate limiting
