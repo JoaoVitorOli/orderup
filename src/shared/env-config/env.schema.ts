@@ -20,6 +20,7 @@ export const envSchema = z.object({
       ),
     ),
   URL_BASE: z.url().min(1),
+  KITCHEN_API_KEY: z.string().min(32),
 });
 
 export type Env = z.infer<typeof envSchema>;
