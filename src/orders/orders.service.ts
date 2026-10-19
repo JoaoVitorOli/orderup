@@ -7,6 +7,7 @@ import { OrderItemSchema } from './entities/order-item.entity.js';
 import type { GetOrderStatusDto } from './dto/get-order-status.dts.js';
 import {type  GetAllOrderDto } from './dto/get-all-orders.dto.js';
 import type { UpdateOrderStatusDto } from './dto/update-order-status.dto.js';
+import { RealtimeGateway } from '../realtime/realtime.gateway.js';
 
 type OrderStatus = UpdateOrderStatusDto['status'];
 
@@ -18,7 +19,11 @@ const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly orm: EntityManager) {}
+  constructor(
+    private readonly orm: EntityManager,
+    private readonly realtime: RealtimeGateway
+  ) {}
+  
 
   async create(createOrderDto: CreateOrderDto) {
     const existing = await this.orm.findOne(OrderSchema, 
@@ -71,11 +76,13 @@ export class OrdersService {
     }
 
     await this.orm.flush();
+    this.realtime.emitOrderCreated(order);
+
     return order;
   }
 
   async getById(id: GetOrderStatusDto) {
-    const order = await this.orm.findOne(OrderSchema, { id });
+    const order = await this.orm.findOne(OrderSchema, { id }, { populate: ['items.menuItem'] });
     
     if (!order) {
       throw new NotFoundException('Order not found')
@@ -110,6 +117,8 @@ export class OrdersService {
 
     order.status = status;
     await this.orm.flush();
+    this.realtime.emitOrderStatusUpdated(order);
+
     return order;
   }
 }
