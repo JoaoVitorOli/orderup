@@ -151,4 +151,4 @@ Other useful commands:
 - [ ] Kitchen-only routes protected by a key (`KITCHEN_API_KEY`)
 - [ ] Soft delete for menu items that already appear in orders
 - [x] CORS configuration
-- [ ] Rate limiting
+- [x] Rate limiting
