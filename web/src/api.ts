@@ -1,3 +1,5 @@
+import { getKitchenKey } from './kitchenKey';
+
 export type OrderStatus = 'RECEIVED' | 'PREPARING' | 'READY';
 
 export interface MenuItem {
@@ -24,7 +26,14 @@ export interface Order {
   items?: OrderItem[];
 }
 
-export class ApiError extends Error {}
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
 
 interface ErrorBody {
   message?: string | string[];
@@ -44,11 +53,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const { message, errors } = (body ?? {}) as ErrorBody;
     const details = errors?.map((e) => `${e.field || 'value'}: ${e.message}`).join(' · ');
     const main = Array.isArray(message) ? message.join(', ') : message;
-    throw new ApiError([main ?? `HTTP ${res.status}`, details].filter(Boolean).join(' — '));
+    throw new ApiError([main ?? `HTTP ${res.status}`, details].filter(Boolean).join(' — '), res.status);
   }
 
   return body as T;
 }
+
+// Kitchen-only routes check this header against KITCHEN_API_KEY on the API.
+const kitchenHeaders = () => ({ 'X-Kitchen-Key': getKitchenKey() ?? '' });
 
 export const api = {
   getMenu: () => request<MenuItem[]>('/menu'),
@@ -63,10 +75,15 @@ export const api = {
     idempotencyKey: string;
     items: { menuItemId: string; quantity: number }[];
   }) => request<Order>('/orders', { method: 'POST', body: JSON.stringify(data) }),
-  getOrders: (statuses: OrderStatus[]) => request<Order[]>(`/orders?status=${statuses.join(',')}`),
+  getOrders: (statuses: OrderStatus[]) =>
+    request<Order[]>(`/orders?status=${statuses.join(',')}`, { headers: kitchenHeaders() }),
   getOrder: (id: string) => request<Order>(`/orders/${id}`),
   updateOrderStatus: (id: string, status: OrderStatus) =>
-    request<Order>(`/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    request<Order>(`/orders/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+      headers: kitchenHeaders(),
+    }),
 };
 
 export const formatPrice = (cents: number) =>
