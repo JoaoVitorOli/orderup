@@ -7,6 +7,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { Server, Socket } from 'socket.io';
@@ -15,6 +16,8 @@ import { ROOMS, WS_EVENTS } from './realtime.events.js';
 import { WsZodValidationPipe } from '../shared/pipes/ws-zod-validation.pipe.js';
 import type { OrderSubscribeDto } from './dto/order-subscribe.dto.js';
 import { orderSubscribeSchema } from './dto/order-subscribe.dto.js';
+import { EnvConfigService } from '../shared/env-config/env-config.service.js';
+import { safeEqual } from '../shared/helpers/safe-equal.js';
 
 @SkipThrottle({ short: true, long: true })
 @WebSocketGateway()
@@ -23,6 +26,8 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   @WebSocketServer()
   private server: Server;
+
+  constructor(private readonly env: EnvConfigService) {}
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
@@ -34,6 +39,12 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   @SubscribeMessage(WS_EVENTS.KITCHEN_SUBSCRIBE)
   async subscribeKitchen(@ConnectedSocket() client: Socket) {
+    const key: unknown = client.handshake.auth?.kitchenKey;
+
+    if (typeof key !== 'string' || !safeEqual(key, this.env.get('KITCHEN_API_KEY'))) {
+      throw new WsException('Invalid kitchen key');
+    }
+
     await client.join(ROOMS.KITCHEN);
     return { ok: true };
   }
