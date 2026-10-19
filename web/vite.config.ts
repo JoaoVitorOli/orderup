@@ -12,6 +12,12 @@ export default defineConfig({
         target: process.env.API_URL ?? 'http://localhost:3000',
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // Socket.IO starts over HTTP and then upgrades to a WebSocket;
+      // `ws: true` forwards that upgrade too.
+      '/socket.io': {
+        target: process.env.API_URL ?? 'http://localhost:3000',
+        ws: true,
+      },
     },
   },
 });
